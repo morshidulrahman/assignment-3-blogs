@@ -30,7 +30,6 @@ const userSchema = new Schema<TUser, UserModel>(
     },
   },
   {
-    timestamps: true,
     versionKey: false,
   },
 );
@@ -53,8 +52,17 @@ userSchema.post('save', function (doc, next) {
 });
 
 userSchema.statics.isUserExistsByCustomId = async function (email: string) {
-  return await User.findOne({ email });
+  return await User.findOne({ email }).select('+password');
 };
+
+userSchema.set('toJSON', {
+  transform: (doc, ret) => {
+    delete ret.password;
+    delete ret.role;
+    delete ret.isBlocked;
+    return ret;
+  },
+});
 
 userSchema.statics.isPasswordMatched = async function (
   plainTextPassword,

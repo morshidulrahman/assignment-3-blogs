@@ -70,6 +70,7 @@ export const globalErrorHandelar: ErrorRequestHandler = (
   }
 
   return res.status(statusCode).json({
+    statusCode,
     success: false,
     message,
     errorSources,

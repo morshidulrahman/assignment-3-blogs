@@ -63,7 +63,7 @@ const DeleteBlogintoDb = async (email: string, id: string) => {
   }
 
   if (!isExistedauthor) {
-    throw new AppError(400, 'You are unAuthorized to update the Blog');
+    throw new AppError(400, 'You are unAuthorized to Delete the Blog');
   }
   const result = await BlogModel.findByIdAndDelete(id);
   return result;

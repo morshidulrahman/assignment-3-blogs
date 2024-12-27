@@ -17,7 +17,6 @@ const BlockUser = catchAsync(async (req, res) => {
 
 const DeletedBlogs = catchAsync(async (req, res) => {
   const { id } = req.params;
-
   await adminServices.BlockDeletedIntoDb(id);
 
   SendResponse(res, {
