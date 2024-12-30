@@ -7,17 +7,19 @@ import catchAsync from '../utils/catchAsync';
 import { TUserRole } from '../modules/users/user.interface';
 import { User } from '../modules/users/user.model';
 import AppError from '../errors/AppError';
-
 const auth = (...requiredRoles: TUserRole[]) => {
   return catchAsync(async (req: Request, res: Response, next: NextFunction) => {
-    const token = req.headers.authorization;
+    const authHeader = req.headers.authorization;
 
-    // checking if the token is missing
-    if (!token) {
+    // Check if the Authorization header exists
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
       throw new AppError(httpStatus.UNAUTHORIZED, 'You are not authorized!');
     }
 
-    // checking if the given token is valid
+    // Extract the token from the header
+    const token = authHeader.split(' ')[1]; // "Bearer <token>" -> Extract <token>
+
+    // Verify the token
     const decoded = jwt.verify(
       token,
       config.jwt_access_secret as string,
@@ -25,24 +27,26 @@ const auth = (...requiredRoles: TUserRole[]) => {
 
     const { role, email } = decoded;
 
-    // checking if the user is exist
+    // Check if the user exists
     const user = await User.isUserExistsByCustomId(email);
 
     if (!user) {
-      throw new AppError(httpStatus.NOT_FOUND, 'This user is not found !');
+      throw new AppError(httpStatus.NOT_FOUND, 'This user is not found!');
     }
-    // checking if the user is already deleted
 
+    // Check if the user is blocked
     const isBlocked = user?.isBlocked;
 
     if (isBlocked) {
-      throw new AppError(httpStatus.FORBIDDEN, 'This user is blocked !');
+      throw new AppError(httpStatus.FORBIDDEN, 'This user is blocked!');
     }
 
+    // Check for role authorization
     if (requiredRoles && !requiredRoles.includes(role)) {
-      throw new AppError(httpStatus.UNAUTHORIZED, 'You are not authorized ');
+      throw new AppError(httpStatus.UNAUTHORIZED, 'You are not authorized!');
     }
 
+    // Attach decoded information to the request object
     req.user = decoded as JwtPayload;
     next();
   });
